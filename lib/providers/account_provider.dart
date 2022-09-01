@@ -1,17 +1,41 @@
 import 'package:flutter/cupertino.dart';
 import 'package:resturant_app/models/account.dart';
+import 'package:resturant_app/models/address.dart';
+import 'package:resturant_app/models/closing_days.dart';
 import 'package:resturant_app/models/restaurant.dart';
 
 class AccountProvider extends ChangeNotifier {
   final List<Restaurant> _restaurantList = [
-    Restaurant(1, "REX", 123456, "09666584421", "Sushi", "homeUrl", "", 1),
-    Restaurant(2, "DORE", 123456, "09648516581", "Fish", "homeUrl", "", 2)
+    Restaurant(1, "REX", 123456, "09666584421", "Sushi", "homeUrl", "", 1, 1),
+    Restaurant(2, "DORE", 123456, "09648516581", "Fish", "homeUrl", "", 2, 2)
+  ];
+  final List<Address> _addressesList = [
+    Address(1, 1234567, "Minato-ku", "Roppongi 1-1-1", "mori Tower", "3B,4404",
+        15.56516, 32.54090333333333),
+    Address(2, 5522189, "Kiolo-ku", "Roppongi 1-2-2", "Kiol Tower", "8B,6255",
+        15.56516, 31.5409037778)
   ];
 
   final List<Account> _accountList = [
-    Account(1, true, "", "Cash", 1000, 15.56516, 32.54090333333333,
-        DateTime.now(), DateTime.now(), [], "My Description", 2)
+    Account(
+        1,
+        true,
+        "",
+        "",
+        "cash",
+        1000,
+        DateTime.now(),
+        DateTime.now().subtract(const Duration(hours: 3)),
+        DateTime.now(),
+        [],
+        [ClDays.Wedesday],
+        "My Description",
+        2)
   ];
+
+  List<Address> get addressesList {
+    return [..._addressesList];
+  }
 
   List<Restaurant> get restaurantList {
     return [..._restaurantList];
@@ -25,6 +49,11 @@ class AccountProvider extends ChangeNotifier {
     return _restaurantList.firstWhere(
         (restaurant) => restaurant.userId == userId,
         orElse: () => Restaurant.initial());
+  }
+
+  Address findAddressById(int addressId) {
+    return _addressesList.firstWhere((address) => address.id == addressId,
+        orElse: () => Address.initial());
   }
 
   Account findRestaurantAccountByUserId(int userId) {

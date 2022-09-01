@@ -39,6 +39,8 @@ dependencies:
   provider: ^6.0.3
   shared_preferences: ^2.0.15
   geolocator: ^9.0.0
+  syncfusion_flutter_calendar: ^20.2.38
+  google_maps_flutter: ^2.1.9
   
 dev_dependencies:
   flutter_test:

@@ -26,8 +26,8 @@ class ActivatedStep extends StatelessWidget {
                     SharedPreferences prefs =
                         await SharedPreferences.getInstance();
                     await prefs.setString("next_step", "account").then((_) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text('MOVE ON to home page Data')));
+                      // ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      //     content: Text('MOVE ON to home page Data')));
                       Navigator.pushReplacementNamed(
                           context, StartupScreen.routeName,
                           arguments: StartupContent.accountInfo);

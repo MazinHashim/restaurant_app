@@ -34,7 +34,7 @@ class _TablesListTileState extends State<TablesListTile> {
       title: Text(widget.tableTypes[widget.index].tableType!),
       dense: true,
       subtitle: Text(
-          "Table that contains ${widget.tableTypes[widget.index].maxSeats!} seats"),
+          "Table that contains ${widget.tableTypes[widget.index].maxSeats!} seat${widget.tableTypes[widget.index].maxSeats != 1 ? 's' : ''}"),
       trailing: FittedBox(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

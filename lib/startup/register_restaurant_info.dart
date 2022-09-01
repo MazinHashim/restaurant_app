@@ -48,15 +48,15 @@ class _RegisterRestaurantInfoState extends State<RegisterRestaurantInfo> {
           accProvider.addRestaurant(restaurant!);
         });
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString("next_step", "activate").then((_) {
+        await prefs.setString("next_step", "addressing").then((_) {
           Navigator.pushReplacementNamed(context, StartupScreen.routeName,
-              arguments: StartupContent.activatedStep);
+              arguments: StartupContent.addressInfo);
         });
       } else {
-        print(restaurant!.pastalCode);
         accProvider.updateRestaurant(restaurant!);
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Updating Restaurant Data...')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            backgroundColor: Theme.of(context).primaryColor,
+            content: const Text('Updating Restaurant Data...')));
       }
       setState(() {
         isLoading = false;
@@ -143,20 +143,6 @@ class _RegisterRestaurantInfoState extends State<RegisterRestaurantInfo> {
                     lblText: "Restaurant Name *",
                     icon: Icons.restaurant),
                 AppTextFormField(
-                    initialValue: (restaurant!.pastalCode ?? "").toString(),
-                    onSaved: (String value) =>
-                        restaurant!.pastalCode = int.parse(value),
-                    onValidate: (String value) {
-                      if (value.isEmpty) {
-                        return "Please fill postal code";
-                      } else if (value.length < 6) {
-                        return 'Please enter at least 6 characters';
-                      }
-                    },
-                    keyboardType: TextInputType.number,
-                    lblText: "Postal Code *",
-                    icon: Icons.qr_code),
-                AppTextFormField(
                     initialValue: restaurant!.phone ?? "",
                     onSaved: (String value) => restaurant!.phone = value,
                     onValidate: (String value) {
@@ -175,32 +161,51 @@ class _RegisterRestaurantInfoState extends State<RegisterRestaurantInfo> {
                       color: Colors.black12,
                       border: Border.all(style: BorderStyle.none),
                       borderRadius: BorderRadius.circular(5)),
-                  child: DropdownSearch<String>(
-                    items: categoryItem,
-                    selectedItem: restaurant!.category ?? "",
-                    popupProps: const PopupProps.menu(
-                        title: Padding(
-                          padding: EdgeInsets.all(10.0),
-                          child: Text(
-                            "Category Of Food",
-                            style: TextStyle(color: Colors.grey, fontSize: 20),
-                          ),
-                        ),
-                        searchFieldProps: TextFieldProps(
-                            decoration: InputDecoration(
-                                hintText: "Search",
-                                contentPadding: EdgeInsets.all(0))),
-                        showSearchBox: true),
-                    onChanged: (value) => restaurant!.category = value,
-                    dropdownBuilder: (context, value) {
-                      return Text(value!);
-                    },
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return "Please select your category";
-                      }
-                      return null;
-                    },
+                  child: Stack(
+                    children: [
+                      if (restaurant!.category!.isEmpty)
+                        Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Row(children: [
+                              Icon(Icons.food_bank_rounded,
+                                  color: Colors.grey[600], size: 30),
+                              const SizedBox(width: 10),
+                              const Text("Category of food *",
+                                  style: TextStyle(fontSize: 18)),
+                            ])),
+                      DropdownSearch<String>(
+                        items: categoryItem,
+                        selectedItem: restaurant!.category ?? "",
+                        popupProps: const PopupProps.menu(
+                            title: Padding(
+                              padding: EdgeInsets.all(10.0),
+                              child: Text(
+                                "Category Of Food",
+                                style:
+                                    TextStyle(color: Colors.grey, fontSize: 20),
+                              ),
+                            ),
+                            searchFieldProps: TextFieldProps(
+                                decoration: InputDecoration(
+                                    hintText: "Search",
+                                    contentPadding: EdgeInsets.all(0))),
+                            showSearchBox: true),
+                        onChanged: (value) {
+                          setState(() {
+                            restaurant!.category = value;
+                          });
+                        },
+                        dropdownBuilder: (context, value) {
+                          return Text(value!);
+                        },
+                        validator: (value) {
+                          if (value!.isEmpty) {
+                            return "Please select your category";
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
                   ),
                 ),
                 AppTextFormField(

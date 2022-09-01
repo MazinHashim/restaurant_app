@@ -20,27 +20,35 @@ class _SignUpFormState extends State<SignUpForm> {
   late String password;
   late String confirmPassword;
   late bool isLoading;
+  late bool isTermed;
   late bool _passwordVisible;
   late bool _confirmVisible;
 
   void submit(AuthProvider provider) {
     final form = _formKey.currentState;
     if (form != null && form.validate()) {
-      form.save();
-      setState(() {
-        isLoading = true;
-      });
-      User user = User(5, email, password);
-      provider.addUser(user);
+      if (!isTermed) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            backgroundColor: Colors.red[500],
+            content: const Text('You must accept the terms and policy')));
+      } else {
+        form.save();
+        setState(() {
+          isLoading = true;
+        });
+        User user = User(5, email, password);
+        provider.addUser(user);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Your account is under verification')));
-      setState(() {
-        isLoading = false;
-      });
-      Navigator.pushReplacementNamed(context, StartupScreen.routeName,
-          arguments: StartupContent.signin);
-      form.reset();
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            backgroundColor: Colors.green[500],
+            content: const Text('Your account is under verification')));
+        setState(() {
+          isLoading = false;
+        });
+        Navigator.pushReplacementNamed(context, StartupScreen.routeName,
+            arguments: StartupContent.signin);
+        form.reset();
+      }
     }
   }
 
@@ -48,6 +56,7 @@ class _SignUpFormState extends State<SignUpForm> {
   void initState() {
     super.initState();
     isLoading = false;
+    isTermed = false;
     password = "";
     _passwordVisible = true;
     _confirmVisible = true;
@@ -134,6 +143,17 @@ class _SignUpFormState extends State<SignUpForm> {
                     lblText: "Confirm Password",
                     icon: Icons.lock_open,
                     isSecure: _confirmVisible),
+                const SizedBox(height: 10),
+                CheckboxListTile(
+                    title: const Text("Accept terms and policy ?"),
+                    secondary: const Icon(Icons.my_library_books),
+                    value: isTermed,
+                    onChanged: (value) {
+                      print("object $value");
+                      setState(() {
+                        isTermed = value!;
+                      });
+                    }),
                 const SizedBox(height: 10),
                 SizedBox(
                   height: 54,

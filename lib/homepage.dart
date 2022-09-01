@@ -9,8 +9,7 @@ import 'package:resturant_app/providers/account_provider.dart';
 import 'package:resturant_app/providers/auth_provider.dart';
 import 'package:resturant_app/startup/startup_content.dart';
 import 'package:resturant_app/startup/startup_screen.dart';
-import 'package:resturant_app/table_management/reservation_filter.dart';
-import 'package:resturant_app/table_management/restaurant_reservations.dart';
+import 'package:resturant_app/table_management/table_reservations.dart';
 import 'package:resturant_app/table_management/tables_list.dart';
 import 'package:resturant_app/widgets/image_picker_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -28,8 +27,8 @@ class _HomePageState extends State<HomePage> {
   List<Map<String, Object>> pages = const [
     {"title": "Tables Management", "icon": Icons.table_bar},
     {"title": "Restuarant Account", "icon": Icons.account_box},
-    {"title": "New Reservations", "icon": Icons.notifications},
-    {"title": "History", "icon": Icons.history}
+    {"title": "Tables Reservations", "icon": Icons.notifications},
+    // {"title": "History", "icon": Icons.history}
   ];
 
   int? currentPage = 0;
@@ -103,17 +102,21 @@ class _HomePageState extends State<HomePage> {
                         profilePic = value
                             .findRestaurantAccountByUserId(sessionUser!.id!)
                             .profilePic!;
-                        return AppImagePicker(
-                            imageFile: profilePic,
-                            onChange: () {
-                              takePhoto(ImageSource.gallery);
-                            });
+                        return MediaQuery.of(context).orientation ==
+                                Orientation.portrait
+                            ? AppImagePicker(
+                                imageFile: profilePic,
+                                onChange: () {
+                                  takePhoto(ImageSource.gallery);
+                                })
+                            : Container();
                       }),
                     ),
-                    Column(
-                      children: List.generate(
-                          pages.length,
-                          (index) => ListTile(
+                    Expanded(
+                      flex: 4,
+                      child: ListView.builder(
+                          itemCount: pages.length,
+                          itemBuilder: (ctx, index) => ListTile(
                               selected: currentPage == index,
                               selectedColor: Colors.black,
                               selectedTileColor: Colors.red[100],
@@ -125,14 +128,17 @@ class _HomePageState extends State<HomePage> {
                                 });
                               })),
                     ),
-                    ReservationToggler(
-                        isResAccepted: isResAccepted,
-                        onChange: (value) {
-                          accProvider.toggleReservations(account.id!);
-                          setState(() {
-                            isResAccepted = value;
-                          });
-                        })
+                    Expanded(
+                      flex: 1,
+                      child: ReservationToggler(
+                          isResAccepted: isResAccepted,
+                          onChange: (value) {
+                            accProvider.toggleReservations(account.id!);
+                            setState(() {
+                              isResAccepted = value;
+                            });
+                          }),
+                    )
                   ],
                 ),
               ),
@@ -160,11 +166,10 @@ class _HomePageState extends State<HomePage> {
                 : currentPage == 1
                     ? AccountPage(user: sessionUser!)
                     : currentPage == 2
-                        ? const RestaurantReservations(
-                            filter: ReservationFiler.reserved)
-                        : currentPage == 3
-                            ? const RestaurantReservations(
-                                filter: ReservationFiler.empty)
-                            : const Center(child: Text("Page Not Fount!")));
+                        ? const TableReservations()
+                        // : currentPage == 3
+                        //     ? const RestaurantReservations(
+                        //         filter: ReservationFiler.empty)
+                        : const Center(child: Text("Page Not Fount!")));
   }
 }

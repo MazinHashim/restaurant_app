@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:resturant_app/account/account_info.dart';
 import 'package:resturant_app/startup/activated_step.dart';
 import 'package:resturant_app/startup/add_billing_info.dart';
+import 'package:resturant_app/startup/address_info.dart';
 import 'package:resturant_app/startup/register_restaurant_info.dart';
 import 'package:resturant_app/startup/signin_form.dart';
 import 'package:resturant_app/startup/signup_form.dart';
@@ -54,7 +55,8 @@ class StartupScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 20),
             children: [
               if (content != StartupContent.restautrantInfo &&
-                  content != StartupContent.accountInfo)
+                  content != StartupContent.accountInfo &&
+                  content != StartupContent.addressInfo)
                 logoWidget(context),
               if (content == StartupContent.loadingSession)
                 const Center(
@@ -67,6 +69,8 @@ class StartupScreen extends StatelessWidget {
                 const SignInForm()
               else if (content == StartupContent.restautrantInfo)
                 const RegisterRestaurantInfo()
+              else if (content == StartupContent.addressInfo)
+                const AddressInfo()
               else if (content == StartupContent.billingInfo)
                 const AddBillingInfo()
               else if (content == StartupContent.activatedStep)

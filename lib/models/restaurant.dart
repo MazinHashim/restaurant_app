@@ -1,6 +1,8 @@
 class Restaurant {
   int? _id, _pastalCode, _userId = 0;
   String? _name, _phone, _category, _homeUrl, _permitPic = "";
+  int? _addressId;
+
   Restaurant.initial() {
     _phone = "";
     _name = "";
@@ -10,11 +12,23 @@ class Restaurant {
     _id = 0;
     _pastalCode = 0;
     _userId = 0;
+    _addressId = 0;
   }
-  Restaurant(int? id, String? name, int? pastalCode, String? phone,
-      String? category, String? homeUrl, String? permitPic, int? userId) {
+  Restaurant(
+      int? id,
+      String? name,
+      int? pastalCode,
+      String? phone,
+      String? category,
+      String? homeUrl,
+      String? permitPic,
+      int? addressId,
+      int? userId) {
     if (id != null) {
       _id = id;
+    }
+    if (addressId != null) {
+      _addressId = addressId;
     }
     if (name != null) {
       _name = name;
@@ -41,6 +55,9 @@ class Restaurant {
 
   int? get id => _id!;
   set id(int? id) => _id = id;
+
+  int? get addressId => _addressId!;
+  set addressId(int? addressId) => _addressId = addressId;
 
   int? get userId => _userId!;
   set userId(int? userId) => _userId = userId;

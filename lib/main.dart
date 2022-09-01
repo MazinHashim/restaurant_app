@@ -40,6 +40,9 @@ class _MyAppState extends State<MyApp> {
       case "restaurant":
         currentContent = StartupContent.restautrantInfo;
         break;
+      case "addressing":
+        currentContent = StartupContent.addressInfo;
+        break;
       case "billing":
         currentContent = StartupContent.billingInfo;
         break;
@@ -89,6 +92,7 @@ class _MyAppState extends State<MyApp> {
         home: isStartUp!
             ? StartupScreen(paramContent: currentContent)
             : const HomePage(),
+        // home: const TableReservations(),
         routes: {
           StartupScreen.routeName: (ctx) => StartupScreen(),
           HomePage.routeName: (ctx) => const HomePage(),

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -7,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:resturant_app/homepage.dart';
 import 'package:resturant_app/models/account.dart';
+import 'package:resturant_app/models/closing_days.dart';
 import 'package:resturant_app/models/table_seats.dart';
 import 'package:resturant_app/models/user.dart';
 import 'package:resturant_app/providers/account_provider.dart';
@@ -33,6 +33,7 @@ class _AccountInfoState extends State<AccountInfo> {
   // StreamSubscription<Position>? positionStream;
 
   late bool isLoading;
+  late bool isLunDin;
   String? errMsg;
   late AuthProvider authProvider;
   late AccountProvider accProvider;
@@ -40,59 +41,40 @@ class _AccountInfoState extends State<AccountInfo> {
   late Account? account = Account.initial();
 
   final ImagePicker picker = ImagePicker();
+  late Map<ClDays, bool> daysValues = {};
 
   void submit() async {
     final form = _formKey.currentState;
     if (form != null && form.validate()) {
-      form.save();
-      setState(() {
-        isLoading = true;
-      });
-
-      if (!widget.isEdition) {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        _determinePosition().then((postion) {
-          currentPosition = postion;
-        }).then((_) {
-          authProvider.getSesstionToken().then((user) {
-            if (currentPosition != null) {
-              account!.latitude = currentPosition!.latitude;
-              account!.longitude = currentPosition!.longitude;
-              account!.userId = user.id;
-              accProvider.addRestaurantAccount(account!);
-              prefs.remove("next_step").then((_) {
-                Navigator.pushReplacementNamed(context, HomePage.routeName);
-              });
-            }
-          });
-        }).catchError((error, stackTrace) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Make sure your device location is enabled')));
-        }).whenComplete(() {
-          setState(() {
-            isLoading = false;
-          });
-        });
+      if (account!.paymentType!.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            backgroundColor: Theme.of(context).primaryColor,
+            content: const Text('Select payment type')));
       } else {
-        _determinePosition().then((position) {
-          currentPosition = position;
-        }).then((_) {
-          if (currentPosition != null) {
-            account!.latitude = currentPosition!.latitude;
-            account!.longitude = currentPosition!.longitude;
-          }
-          print(account!.latitude);
-          print(account!.longitude);
+        form.save();
+        setState(() {
+          isLoading = true;
+        });
+
+        if (!widget.isEdition) {
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          authProvider.getSesstionToken().then((user) {
+            account!.userId = user.id;
+            accProvider.addRestaurantAccount(account!);
+            prefs.remove("next_step").then((_) {
+              Navigator.pushReplacementNamed(context, HomePage.routeName);
+            });
+          });
+        } else {
           accProvider.updateRestaurantAccount(account!);
-        }).whenComplete(() {
           ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Processing Account Data...')));
-          setState(() {
-            isLoading = false;
-          });
+        }
+        setState(() {
+          isLoading = false;
         });
+        form.reset();
       }
-      form.reset();
     }
   }
 
@@ -100,7 +82,18 @@ class _AccountInfoState extends State<AccountInfo> {
   void initState() {
     super.initState();
     isLoading = false;
+    isLunDin = false;
     tableTypes = [];
+    daysValues = {
+      ClDays.Monday: false,
+      ClDays.Tuesday: false,
+      ClDays.Wedesday: false,
+      ClDays.Thursday: false,
+      ClDays.Friday: false,
+      ClDays.Saturday: false,
+      ClDays.Sunday: false,
+      ClDays.Holidays: false
+    };
   }
 
   @override
@@ -114,9 +107,11 @@ class _AccountInfoState extends State<AccountInfo> {
   Widget build(BuildContext context) {
     if (widget.isEdition) {
       account = accProvider.findRestaurantAccountByUserId(widget.user!.id!);
-    } else if (currentPosition != null) {
-      account!.latitude = currentPosition!.latitude;
-      account!.longitude = currentPosition!.longitude;
+      for (ClDays day in account!.closingDays!) {
+        if (daysValues.containsKey(day)) {
+          daysValues[day] = true;
+        }
+      }
     }
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -133,32 +128,11 @@ class _AccountInfoState extends State<AccountInfo> {
               });
             }),
         const SizedBox(height: 40),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-              color: Colors.blueGrey, borderRadius: BorderRadius.circular(5)),
-          child: (!widget.isEdition)
-              ? const Text(
-                  "Make sure you are at the resturant and your device location is enabled",
-                  style: TextStyle(fontSize: 17, color: Colors.white))
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Latitude: ${account!.latitude!.toStringAsFixed(5)}",
-                        style:
-                            const TextStyle(fontSize: 20, color: Colors.white)),
-                    Text("Longitude: ${account!.longitude!.toStringAsFixed(5)}",
-                        style:
-                            const TextStyle(fontSize: 20, color: Colors.white)),
-                  ],
-                ),
-        ),
-        const SizedBox(height: 20),
         Form(
             key: _formKey,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (!widget.isEdition)
                   ReservationToggler(
@@ -168,16 +142,31 @@ class _AccountInfoState extends State<AccountInfo> {
                           account!.isEnabled = value;
                         });
                       }),
-                AppTextFormField(
-                    initialValue: account!.paymentType ?? "",
-                    onSaved: (String value) => account!.paymentType = value,
-                    onValidate: (String value) {
-                      if (value.isEmpty) {
-                        return "Please fill paymant type";
+                const Text("  Payment Type *", style: TextStyle(fontSize: 18)),
+                RadioListTile<String>(
+                    value: "cash",
+                    secondary: const Icon(Icons.monetization_on, size: 30),
+                    title: const Text("Cash Only"),
+                    groupValue: account!.paymentType,
+                    onChanged: (String? value) {
+                      if (value!.compareTo(account!.paymentType!) != 0) {
+                        setState(() {
+                          account!.paymentType = value;
+                        });
                       }
-                    },
-                    lblText: "Payment Type *",
-                    icon: Icons.payment),
+                    }),
+                RadioListTile<String>(
+                    value: "card",
+                    secondary: const Icon(Icons.credit_card, size: 30),
+                    title: const Text("Accept Credit Card"),
+                    groupValue: account!.paymentType,
+                    onChanged: (String? value) {
+                      if (value!.compareTo(account!.paymentType!) != 0) {
+                        setState(() {
+                          account!.paymentType = value;
+                        });
+                      }
+                    }),
                 AppTextFormField(
                     initialValue: (account!.budget ?? "").toString(),
                     onSaved: (String value) =>
@@ -188,48 +177,49 @@ class _AccountInfoState extends State<AccountInfo> {
                       }
                     },
                     lblText: "Budget *",
-                    icon: Icons.attach_money_sharp),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width / 3,
-                      child: AppTextFormField(
-                          initialValue:
-                              "${account!.openingTime!.hour}:${account!.openingTime!.minute}",
-                          onSaved: (String value) {
-                            int hour = int.parse(value.split(':')[0]);
-                            int min = int.parse(value.split(':')[1]);
-                            account!.openingTime = DateTime(0, 0, 0, hour, min);
-                          },
-                          onValidate: (String value) {
-                            if (value.isEmpty) {
-                              return "Fill opening time like hh:mm";
+                    icon: Icons.currency_yen_rounded),
+                workingHoursDate(context, account!.openingTime!,
+                    account!.closingTime!, true),
+                const SizedBox(height: 10),
+                Align(
+                    alignment: Alignment.centerLeft,
+                    child: CheckboxListTile(
+                        title: const Text(
+                          "if lunch and dinner time are seperated",
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        value: isLunDin,
+                        onChanged: (value) {
+                          setState(() {
+                            isLunDin = value!;
+                          });
+                        })),
+                Visibility(
+                  visible: isLunDin,
+                  maintainAnimation: true,
+                  maintainState: true,
+                  maintainSize: true,
+                  child: workingHoursDate(context, account!.businessHours!,
+                      account!.closingTime!, false),
+                ),
+                const Text("Closing days (Optional)",
+                    style: TextStyle(fontSize: 18)),
+                Wrap(
+                  children: daysValues.keys
+                      .map((ClDays day) => CheckboxListTile(
+                          value: daysValues[day],
+                          title: Text(day.name),
+                          onChanged: (value) {
+                            if (value!) {
+                              account!.closingDays!.add(day);
+                              daysValues[day] = true;
+                            } else {
+                              account!.closingDays!.remove(day);
+                              daysValues[day] = false;
                             }
-                          },
-                          lblText: "Open *",
-                          icon: Icons.access_time_filled),
-                    ),
-                    const Text("To", style: TextStyle(fontSize: 15)),
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width / 3,
-                      child: AppTextFormField(
-                          initialValue:
-                              "${account!.closingTime!.hour}:${account!.closingTime!.minute}",
-                          onSaved: (String value) {
-                            int hour = int.parse(value.split(':')[0]);
-                            int min = int.parse(value.split(':')[1]);
-                            account!.closingTime = DateTime(0, 0, 0, hour, min);
-                          },
-                          onValidate: (String value) {
-                            if (value.isEmpty) {
-                              return "Fill closing time like hh:mm";
-                            }
-                          },
-                          lblText: "Close *",
-                          icon: Icons.access_time_filled),
-                    ),
-                  ],
+                            setState(() {});
+                          }))
+                      .toList(),
                 ),
                 if (!widget.isEdition)
                   const Text("Count of Tables",
@@ -293,6 +283,50 @@ class _AccountInfoState extends State<AccountInfo> {
                     );
                   },
                 ).toList()),
+                const SizedBox(height: 10),
+                Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: 5),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      color: Colors.white,
+                      boxShadow: const [
+                        BoxShadow(
+                            color: Colors.grey,
+                            blurRadius: 4,
+                            spreadRadius: 0,
+                            offset: Offset(0, 0))
+                      ]),
+                  child: ListTile(
+                    onTap: () async {
+                      takePhoto(ImageSource.gallery);
+                    },
+                    title: const Text("Upload Menu Picture"),
+                    textColor: Theme.of(context).primaryColor,
+                    iconColor: Theme.of(context).primaryColor,
+                    trailing: const Icon(Icons.add_photo_alternate),
+                  ),
+                ),
+                if (account!.menuePic!.isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.all(10),
+                    height: 300,
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                            blurRadius: 4,
+                            spreadRadius: 0,
+                            offset: Offset(0, 0))
+                      ],
+                      color: Colors.white,
+                    ),
+                    child: Image.file(
+                      File(account!.menuePic!),
+                      fit: BoxFit.fill,
+                    ),
+                  ),
                 AppTextFormField(
                     initialValue: account!.description ?? "",
                     maxLines: 5,
@@ -329,6 +363,52 @@ class _AccountInfoState extends State<AccountInfo> {
     );
   }
 
+  Row workingHoursDate(BuildContext context, DateTime openingTime,
+      DateTime closingTime, bool isRequired) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        SizedBox(
+          width: MediaQuery.of(context).size.width / 3,
+          child: AppTextFormField(
+              initialValue:
+                  "${openingTime.hour > 9 ? openingTime.hour : "0${openingTime.hour}"}:${openingTime.minute > 9 ? openingTime.minute : "0${openingTime.minute}"}",
+              onSaved: (String value) {
+                int hour = int.parse(value.split(':')[0]);
+                int min = int.parse(value.split(':')[1]);
+                openingTime = DateTime(0, 0, 0, hour, min);
+              },
+              onValidate: (String value) {
+                if (isRequired && value.isEmpty) {
+                  return "Fill opening time like hh:mm";
+                }
+              },
+              lblText: "Open *",
+              icon: Icons.access_time_filled),
+        ),
+        const Text("To", style: TextStyle(fontSize: 15)),
+        SizedBox(
+          width: MediaQuery.of(context).size.width / 3,
+          child: AppTextFormField(
+              initialValue:
+                  "${closingTime.hour > 9 ? closingTime.hour : "0${closingTime.hour}"}:${closingTime.minute > 9 ? closingTime.minute : "0${closingTime.minute}"}",
+              onSaved: (String value) {
+                int hour = int.parse(value.split(':')[0]);
+                int min = int.parse(value.split(':')[1]);
+                closingTime = DateTime(0, 0, 0, hour, min);
+              },
+              onValidate: (String value) {
+                if (value.isEmpty) {
+                  return "Fill closing time like hh:mm";
+                }
+              },
+              lblText: "Close *",
+              icon: Icons.access_time_filled),
+        ),
+      ],
+    );
+  }
+
   Padding titleText() {
     return const Padding(
       padding: EdgeInsets.only(top: 22.0),
@@ -338,6 +418,13 @@ class _AccountInfoState extends State<AccountInfo> {
             color: Colors.black, fontSize: 25, fontWeight: FontWeight.bold),
       ),
     );
+  }
+
+  void takePhoto(ImageSource source) async {
+    final XFile? pickedFile = await picker.pickImage(source: source);
+    setState(() {
+      account!.menuePic = pickedFile!.path;
+    });
   }
 
   void selectMultiImages() async {
@@ -356,31 +443,6 @@ class _AccountInfoState extends State<AccountInfo> {
   //   super.dispose();
   //   positionStream?.cancel();
   // }
-
-  Future<Position?> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied');
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      await Geolocator.openLocationSettings();
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
-    }
-    return await Geolocator.getCurrentPosition();
-  }
 
   // void listenToLocationChanges() {
   //   LocationSettings locationSettings = const LocationSettings(

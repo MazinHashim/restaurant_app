@@ -1,42 +1,43 @@
 import 'package:image_picker/image_picker.dart';
+import 'package:resturant_app/models/closing_days.dart';
 
 class Account {
   int? _id;
   bool? _isEnabled;
-  String? _profilePic, _paymentType, _description;
+  String? _profilePic, _menuePic, _paymentType, _description;
   double? _budget;
-  double? _latitude;
-  double? _longitude;
-  DateTime? _openingTime, _closingTime;
+  DateTime? _openingTime, _closingTime, _businessHours;
   List<XFile>? _restaurantImages;
+  List<ClDays>? _closingDays;
   int? _userId;
 
   Account.initial() {
     _id = 0;
     _isEnabled = false;
     _profilePic = "";
+    _menuePic = "";
     _paymentType = "";
-    _budget = 0.0;
-    _latitude = 0.0;
-    _longitude = 0.0;
     _openingTime = DateTime.now();
     _closingTime = DateTime.now();
+    _businessHours = DateTime.now();
     _description = "";
     _userId = 0;
     _restaurantImages = [];
+    _closingDays = [];
   }
 
   Account(
       int? id,
       bool? isEnabled,
       String? profilePic,
+      String? menuePic,
       String? paymentType,
       double? budget,
-      double? latitude,
-      double? longitude,
       DateTime? openingTime,
       DateTime? closingTime,
+      DateTime? businessHours,
       List<XFile>? restaurantImages,
+      List<ClDays>? closingDays,
       String? description,
       int? userId) {
     if (id != null) {
@@ -48,23 +49,23 @@ class Account {
     if (profilePic != null) {
       _profilePic = profilePic;
     }
+    if (menuePic != null) {
+      _menuePic = menuePic;
+    }
     if (paymentType != null) {
       _paymentType = paymentType;
     }
     if (budget != null) {
       _budget = budget;
     }
-    if (latitude != null) {
-      _latitude = latitude;
-    }
-    if (longitude != null) {
-      _longitude = longitude;
-    }
     if (openingTime != null) {
       _openingTime = openingTime;
     }
     if (closingTime != null) {
       _closingTime = closingTime;
+    }
+    if (businessHours != null) {
+      _businessHours = businessHours;
     }
     if (description != null) {
       _description = description;
@@ -75,6 +76,9 @@ class Account {
     if (restaurantImages != null) {
       _restaurantImages = restaurantImages;
     }
+    if (closingDays != null) {
+      _closingDays = closingDays;
+    }
   }
 
   int? get id => _id;
@@ -82,27 +86,38 @@ class Account {
 
   bool? get isEnabled => _isEnabled;
   set isEnabled(bool? isEnabled) => _isEnabled = isEnabled!;
+
   String? get profilePic => _profilePic;
   set profilePic(String? profilePic) => _profilePic = profilePic!;
+
+  String? get menuePic => _menuePic;
+  set menuePic(String? menuePic) => _menuePic = menuePic!;
+
   String? get paymentType => _paymentType;
   set paymentType(String? paymentType) => _paymentType = paymentType!;
+
   double? get budget => _budget;
   set budget(double? budget) => _budget = budget!;
 
-  double? get latitude => _latitude;
-  set latitude(double? latitude) => _latitude = latitude!;
-
-  double? get longitude => _longitude;
-  set longitude(double? longitude) => _longitude = longitude!;
   DateTime? get openingTime => _openingTime;
   set openingTime(DateTime? openingTime) => _openingTime = openingTime!;
+
+  DateTime? get businessHours => _businessHours;
+  set businessHours(DateTime? businessHours) => _businessHours = businessHours!;
+
   DateTime? get closingTime => _closingTime;
   set closingTime(DateTime? closingTime) => _closingTime = closingTime!;
+
+  List<ClDays>? get closingDays => _closingDays;
+  set closingDays(List<ClDays>? closingDays) => _closingDays = closingDays!;
+
   List<XFile>? get restaurantImages => _restaurantImages;
   set restaurantImages(List<XFile>? restaurantImages) =>
       _restaurantImages = restaurantImages!;
+
   String? get description => _description;
   set description(String? description) => _description = description!;
+
   int? get userId => _userId!;
   set userId(int? userId) => _userId = userId;
   // Account.fromJson(Map<String, dynamic> json) {

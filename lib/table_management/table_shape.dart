@@ -64,8 +64,7 @@ class TableShape extends StatelessWidget {
                       elevation: 20,
                       builder: (ctx) {
                         return ReservationDetails(
-                            reservations: reservations,
-                            index: index,
+                            reservation: reservations[index],
                             tableInstance: tableInstance);
                       });
                 },
