@@ -6,5 +6,5 @@
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <meta-data android:name="com.google.android.maps.v2.API_KEY"
-              android:value="AIzaSyAxhNQ92Pf9XCpywecTOKYa_MvK09O99Vg"/>
+              android:value="<%GOOGLE_MAP_API_KEY%>"/>
 </manifest>
